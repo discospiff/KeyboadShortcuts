@@ -10,18 +10,30 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
+import android.widget.Toast;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class ShortcutActivity extends ShortcutBaseActivity {
+
+    @BindView(R.id.edtShortcutName)
+    EditText edtShortcutName;
+
+    @BindView(R.id.actKeys)
+    AutoCompleteTextView actKeys;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_shortcut);
-        AutoCompleteTextView actKeys = findViewById(R.id.actKeys);
-        EditText edtShortcutName = findViewById(R.id.edtShortcutName);
+
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        ButterKnife.bind(this);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -31,6 +43,11 @@ public class ShortcutActivity extends ShortcutBaseActivity {
                         .setAction("Action", null).show();
             }
         });
+    }
+
+    @OnClick(R.id.btnAddKey)
+    public void onBtnAddKeyClicked() {
+        Toast.makeText(getApplicationContext(), "We are here", Toast.LENGTH_LONG).show();
     }
 
 }
