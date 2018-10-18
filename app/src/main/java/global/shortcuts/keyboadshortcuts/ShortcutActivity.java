@@ -10,6 +10,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import butterknife.BindView;
@@ -23,6 +24,9 @@ public class ShortcutActivity extends ShortcutBaseActivity {
 
     @BindView(R.id.actKeys)
     AutoCompleteTextView actKeys;
+
+    @BindView(R.id.lblAllKeys)
+    TextView lblAllKeys;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +51,19 @@ public class ShortcutActivity extends ShortcutBaseActivity {
 
     @OnClick(R.id.btnAddKey)
     public void onBtnAddKeyClicked() {
-        Toast.makeText(getApplicationContext(), "We are here", Toast.LENGTH_LONG).show();
+        // Toast.makeText(getApplicationContext(), "We are here", Toast.LENGTH_LONG).show();
+        String key = actKeys.getText().toString();
+        String currentKeys = lblAllKeys.getText().toString();
+        lblAllKeys.setText(currentKeys + key + " " );
+        actKeys.setText("");
+    }
+
+    /**
+     * Button click handler for save event.
+     */
+    @OnClick(R.id.btnSave)
+    public void saveShortcut() {
+        // TODO trim excess space.
     }
 
 }
