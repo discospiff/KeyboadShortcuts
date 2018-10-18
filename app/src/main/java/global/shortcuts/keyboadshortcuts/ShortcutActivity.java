@@ -13,9 +13,13 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import global.shortcuts.keyboadshortcuts.dto.Shortcut;
 
 public class ShortcutActivity extends ShortcutBaseActivity {
 
@@ -28,6 +32,8 @@ public class ShortcutActivity extends ShortcutBaseActivity {
     @BindView(R.id.lblAllKeys)
     TextView lblAllKeys;
 
+    List<String> allKeys;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,6 +44,8 @@ public class ShortcutActivity extends ShortcutBaseActivity {
         setSupportActionBar(toolbar);
 
         ButterKnife.bind(this);
+
+        allKeys = new ArrayList<String>();
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -53,9 +61,11 @@ public class ShortcutActivity extends ShortcutBaseActivity {
     public void onBtnAddKeyClicked() {
         // Toast.makeText(getApplicationContext(), "We are here", Toast.LENGTH_LONG).show();
         String key = actKeys.getText().toString();
+        allKeys.add(key);
         String currentKeys = lblAllKeys.getText().toString();
         lblAllKeys.setText(currentKeys + key + " " );
         actKeys.setText("");
+
     }
 
     /**
@@ -63,7 +73,12 @@ public class ShortcutActivity extends ShortcutBaseActivity {
      */
     @OnClick(R.id.btnSave)
     public void saveShortcut() {
-        // TODO trim excess space.
+        Shortcut shortcut = new Shortcut();
+        shortcut.setName(edtShortcutName.getText().toString());
+        shortcut.setKeys(allKeys);
+        allKeys = new ArrayList<String>();
+        lblAllKeys.setText("");
+
     }
 
 }
