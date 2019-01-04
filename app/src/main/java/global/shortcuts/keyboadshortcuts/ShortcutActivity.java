@@ -13,6 +13,9 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,6 +79,11 @@ public class ShortcutActivity extends ShortcutBaseActivity {
         Shortcut shortcut = new Shortcut();
         shortcut.setName(edtShortcutName.getText().toString());
         shortcut.setKeys(allKeys);
+
+        FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
+        DatabaseReference reference = firebaseDatabase.getReference();
+        reference.child("root").push().setValue(shortcut);
+
         allKeys = new ArrayList<String>();
         lblAllKeys.setText("");
 
