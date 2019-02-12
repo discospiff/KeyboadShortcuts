@@ -33,6 +33,7 @@ import global.shortcuts.keyboadshortcuts.dto.Shortcut;
 
 public class ShortcutActivity extends ShortcutBaseActivity {
 
+    public static final int READ_STORAGE_REQUEST_CODE = 1997;
     @BindView(R.id.edtShortcutName)
     EditText edtShortcutName;
 
@@ -101,12 +102,31 @@ public class ShortcutActivity extends ShortcutBaseActivity {
     public void onBtnOpenGalleryClicked() {
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
             openGallery();
+        } else {
+            String[] permissionRequest = {Manifest.permission.READ_EXTERNAL_STORAGE};
+            requestPermissions(permissionRequest, READ_STORAGE_REQUEST_CODE);
         }
-        // TODO handle permission not requested
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        // are we hearing back from read storage?
+        if(requestCode == READ_STORAGE_REQUEST_CODE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // we are OK to invoke the gallery!
+                openGallery();
+            } else {
+                // the permission was not granted.
+                Toast.makeText(this, R.string.storage_permission, Toast.LENGTH_LONG).show();
+            }
+        }
+
     }
 
     private void openGallery() {
         // TODO add open gallery logic here.
+        Toast.makeText(this, "Gallery Opened", Toast.LENGTH_LONG).show();
     }
 
     /**
