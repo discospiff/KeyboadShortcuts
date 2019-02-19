@@ -1,11 +1,18 @@
 package global.shortcuts.keyboadshortcuts;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.ImageDecoder;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -23,6 +30,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +42,7 @@ import global.shortcuts.keyboadshortcuts.dto.Shortcut;
 public class ShortcutActivity extends ShortcutBaseActivity {
 
     public static final int READ_STORAGE_REQUEST_CODE = 1997;
+    public static final String SHORTCUT_CHANNEL_ID = "SHORTCUT_CHANNEL_ID";
     @BindView(R.id.edtShortcutName)
     EditText edtShortcutName;
 
@@ -62,8 +71,7 @@ public class ShortcutActivity extends ShortcutBaseActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                createAndShowNotification();
             }
         });
 
@@ -85,6 +93,41 @@ public class ShortcutActivity extends ShortcutBaseActivity {
 
             }
         });
+
+        // initialize our notification channel
+        createNotificationChannel();
+    }
+
+   private void createNotificationChannel() {
+        // define the channel
+        String name = "Shortcuts";
+        NotificationChannel channel = new NotificationChannel(SHORTCUT_CHANNEL_ID, name, NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setDescription("A channel for shortcuts");
+        // create the channel on the system.
+       NotificationManager notificationManager = getSystemService(NotificationManager.class);
+       notificationManager.createNotificationChannel(channel);
+   }
+
+    private void createAndShowNotification() {
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, SHORTCUT_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setContentTitle("Notification Title")
+                .setContentText("Notification Text");
+
+        // TODO do we have an image?
+        ImageDecoder.Source source = ImageDecoder.createSource(getResources(), R.drawable.ic_add);
+        try {
+            Bitmap bitmap = ImageDecoder.decodeBitmap(source);
+            // if we are here, there was not an exception thrown, so we have a bitmap.
+            mBuilder.setStyle(new NotificationCompat.BigPictureStyle().bigPicture(bitmap));
+        } catch (IOException e) {
+            // if we can't get the bitmap, no problem!  Just use a normal notification.
+            e.printStackTrace();
+        }
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        notificationManager.notify(1, mBuilder.build());
+
     }
 
     @OnClick(R.id.btnAddKey)
