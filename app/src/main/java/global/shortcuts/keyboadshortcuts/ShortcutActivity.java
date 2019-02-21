@@ -7,8 +7,11 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.ImageDecoder;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.NotificationCompat;
@@ -21,6 +24,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,6 +34,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +48,7 @@ public class ShortcutActivity extends ShortcutBaseActivity {
 
     public static final int READ_STORAGE_REQUEST_CODE = 1997;
     public static final String SHORTCUT_CHANNEL_ID = "SHORTCUT_CHANNEL_ID";
+    public static final int GALLERY_REQUEST_CODE = 30;
     @BindView(R.id.edtShortcutName)
     EditText edtShortcutName;
 
@@ -53,6 +59,9 @@ public class ShortcutActivity extends ShortcutBaseActivity {
     TextView lblAllKeys;
 
     List<String> allKeys;
+
+    @BindView(R.id.imageView)
+    ImageView imageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -168,8 +177,32 @@ public class ShortcutActivity extends ShortcutBaseActivity {
     }
 
     private void openGallery() {
-        // TODO add open gallery logic here.
-        Toast.makeText(this, "Gallery Opened", Toast.LENGTH_LONG).show();
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        File filePictureDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        Uri data = Uri.parse(filePictureDirectory.getPath());
+        String type = "image/*";
+        intent.setDataAndType(data, type);
+        startActivityForResult(intent, GALLERY_REQUEST_CODE);
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            if (requestCode == GALLERY_REQUEST_CODE) {
+                Uri imageUri = data.getData();
+                ImageDecoder.Source source = ImageDecoder.createSource(getContentResolver(), imageUri);
+                try {
+                    Bitmap bitmap = ImageDecoder.decodeBitmap(source);
+                    imageView.setImageBitmap(bitmap);
+                } catch (IOException e) {
+                    // just don't show the image.
+                    e.printStackTrace();
+                }
+
+            }
+        }
     }
 
     /**
