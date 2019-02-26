@@ -3,6 +3,7 @@ package global.shortcuts.keyboadshortcuts;
 import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -56,6 +57,11 @@ public class ShortcutActivity extends ShortcutBaseActivity {
     public static final int READ_STORAGE_REQUEST_CODE = 1997;
     public static final String SHORTCUT_CHANNEL_ID = "SHORTCUT_CHANNEL_ID";
     public static final int GALLERY_REQUEST_CODE = 30;
+    public static final String VOTE_RECEIVER = "VOTE_RECEIVER";
+    public static final String SHORTCUT_ID = "SHORTCUT_ID";
+    public static final String VOTE_TYPE = "VOTE_TYPE";
+    public static final int UP_VOTE = 0;
+    public static final int DOWN_VOTE = 1;
     @BindView(R.id.edtShortcutName)
     EditText edtShortcutName;
 
@@ -127,10 +133,31 @@ public class ShortcutActivity extends ShortcutBaseActivity {
    }
 
     private void createAndShowNotification() {
+
+        // this is what we want the pending intent to do.
+        Intent intent = new Intent(this, VoteReceiver.class);
+        intent.setAction(VOTE_RECEIVER);
+        intent.putExtra(SHORTCUT_ID, 0);
+        intent.putExtra(VOTE_TYPE, UP_VOTE);
+
+        // now, wrap our intent in a pending intent.
+        PendingIntent votePendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), 10, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        // this is what we want the pending intent to do.
+        Intent downIntent = new Intent(this, VoteReceiver.class);
+        downIntent.setAction(VOTE_RECEIVER);
+        downIntent.putExtra(SHORTCUT_ID, 0);
+        downIntent.putExtra(VOTE_TYPE, DOWN_VOTE);
+
+        // now, wrap our intent in a pending intent.
+        PendingIntent voteDownPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), 20, downIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, SHORTCUT_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setContentTitle("Notification Title")
-                .setContentText("Notification Text");
+                .setContentText("Notification Text")
+                .addAction(R.drawable.ic_up_vote, "Vote Up", votePendingIntent)
+                .addAction(R.drawable.ic_down_vote, "Vote Down", voteDownPendingIntent);
 
         // TODO do we have an image?
         ImageDecoder.Source source = ImageDecoder.createSource(getResources(), R.drawable.ic_add);
@@ -242,10 +269,8 @@ public class ShortcutActivity extends ShortcutBaseActivity {
                         @Override
                         public void onSuccess(Uri uri) {
                             String link = uri.toString();
-                            int i = 1 + 1;
                         }
                     });
-                    int i = 1 + 1;
                 }
             });
         }
