@@ -29,6 +29,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -161,27 +164,34 @@ public class ShortcutActivity extends ShortcutBaseActivity {
         // now, wrap our intent in a pending intent.
         PendingIntent voteDownPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), 20, downIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, SHORTCUT_CHANNEL_ID)
+        final NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, SHORTCUT_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setContentTitle("New Shortcut")
+                .setContentTitle(shortcut.getDescription() + " " + shortcut.getKeys())
                 .setContentText(shortcut.getDescription())
                 .addAction(R.drawable.ic_up_vote, "Vote Up", votePendingIntent)
                 .addAction(R.drawable.ic_down_vote, "Vote Down", voteDownPendingIntent);
-
         if (shortcut.getImageUri() != null && !shortcut.getImageUri().isEmpty()) {
-            ImageDecoder.Source source = ImageDecoder.createSource(getContentResolver(), Uri.parse(shortcut.getImageUri()));
-            try {
-                Bitmap bitmap = ImageDecoder.decodeBitmap(source);
-                // if we are here, there was not an exception thrown, so we have a bitmap.
-                mBuilder.setStyle(new NotificationCompat.BigPictureStyle().bigPicture(bitmap));
-            } catch (IOException e) {
-                // if we can't get the bitmap, no problem!  Just use a normal notification.
-                e.printStackTrace();
-            }
-        }
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-        notificationManager.notify(1, mBuilder.build());
+            // use this path to show a notification with an image.
+            Glide.with(this).asBitmap().load(shortcut.getImageUri()).into(new SimpleTarget<Bitmap>() {
 
+                /**
+                 * The method that will be called when the resource load has finished.
+                 *
+                 * @param resource   the loaded resource.
+                 * @param transition
+                 */
+                @Override
+                public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
+                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(ShortcutActivity.this);
+                    mBuilder.setStyle(new NotificationCompat.BigPictureStyle().bigPicture(resource));
+                    notificationManager.notify(1, mBuilder.build());
+                }
+            });
+        } else {
+            // we do not have an image to show; show the notification without it.
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+            notificationManager.notify(1, mBuilder.build());
+        }
     }
 
     @OnClick(R.id.btnAddKey)
@@ -255,6 +265,9 @@ public class ShortcutActivity extends ShortcutBaseActivity {
      */
     @OnClick(R.id.btnSave)
     public void saveShortcut() {
+        final FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
+        final DatabaseReference reference = firebaseDatabase.getReference();
+        final Shortcut shortcut = new Shortcut();
         if (imageUri != null) {
             StorageReference storageReference = FirebaseStorage.getInstance().getReference();
 
@@ -278,6 +291,8 @@ public class ShortcutActivity extends ShortcutBaseActivity {
                         @Override
                         public void onSuccess(Uri uri) {
                             String link = uri.toString();
+                            reference.child("root").child(shortcut.getKey()).child("imageUri").setValue(link);
+
                         }
                     });
                 }
@@ -285,11 +300,11 @@ public class ShortcutActivity extends ShortcutBaseActivity {
         }
 
 
-        Shortcut shortcut = new Shortcut();
         shortcut.setName(edtShortcutName.getText().toString());
         shortcut.setKeys(allKeys);
+        shortcut.setImageUri("");
 
-        FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
+
         DatabaseReference childReference = firebaseDatabase.getReference().child("root").push();
         childReference.setValue(shortcut);
         shortcut.setKey(childReference.getKey());
