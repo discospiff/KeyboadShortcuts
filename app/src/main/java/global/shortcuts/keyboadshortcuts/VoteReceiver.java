@@ -7,6 +7,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import global.shortcuts.keyboadshortcuts.dto.Shortcut;
+
 public class VoteReceiver extends BroadcastReceiver {
     /**
      * This method is called when the BroadcastReceiver is receiving an Intent
@@ -50,8 +58,18 @@ public class VoteReceiver extends BroadcastReceiver {
 
         int shortcutId = intent.getIntExtra(ShortcutActivity.SHORTCUT_ID, -1);
         int voteType = intent.getIntExtra(ShortcutActivity.VOTE_TYPE, -1);
+        Shortcut shortcut = (Shortcut) intent.getSerializableExtra(ShortcutActivity.SHORTCUT);
 
-        // handle the vote type.
-        int i = 1 + 1;
+        FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
+        DatabaseReference reference = firebaseDatabase.getReference().child("root");
+
+        if (voteType == ShortcutActivity.UP_VOTE) {
+            int newVote = shortcut.getUpVote() + 1;
+            reference.child(shortcut.getKey()).child("upVote").setValue(newVote);
+        } else if (voteType == ShortcutActivity.DOWN_VOTE) {
+            int newVote = shortcut.getDownVote() + 1;
+            reference.child(shortcut.getKey()).child("downVote").setValue(newVote);
+        }
+
     }
 }

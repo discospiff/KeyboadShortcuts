@@ -62,6 +62,7 @@ public class ShortcutActivity extends ShortcutBaseActivity {
     public static final String VOTE_TYPE = "VOTE_TYPE";
     public static final int UP_VOTE = 0;
     public static final int DOWN_VOTE = 1;
+    public static final String SHORTCUT = "SHORTCUT";
     @BindView(R.id.edtShortcutName)
     EditText edtShortcutName;
 
@@ -95,7 +96,7 @@ public class ShortcutActivity extends ShortcutBaseActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                createAndShowNotification();
+
             }
         });
 
@@ -106,10 +107,16 @@ public class ShortcutActivity extends ShortcutBaseActivity {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 Iterable<DataSnapshot> children = dataSnapshot.getChildren();
 
+                List<Shortcut> allShorcuts = new ArrayList<Shortcut>();
                 for(DataSnapshot child : children) {
                     Shortcut shortcut = child.getValue(Shortcut.class);
-                    Toast.makeText(getApplicationContext(), "Shortcut: " + shortcut.getName() + " Keys: " + shortcut.getKeys(), Toast.LENGTH_LONG).show();
+                    shortcut.setKey(child.getKey());
+                    allShorcuts.add(shortcut);
+
                 }
+                int randomShorcut = (int) (allShorcuts.size() * Math.random());
+                Shortcut shortcut = allShorcuts.get(randomShorcut);
+                createAndShowNotification(shortcut);
             }
 
             @Override
@@ -132,13 +139,14 @@ public class ShortcutActivity extends ShortcutBaseActivity {
        notificationManager.createNotificationChannel(channel);
    }
 
-    private void createAndShowNotification() {
+    private void createAndShowNotification(Shortcut shortcut) {
 
         // this is what we want the pending intent to do.
         Intent intent = new Intent(this, VoteReceiver.class);
         intent.setAction(VOTE_RECEIVER);
         intent.putExtra(SHORTCUT_ID, 0);
         intent.putExtra(VOTE_TYPE, UP_VOTE);
+        intent.putExtra(SHORTCUT, shortcut);
 
         // now, wrap our intent in a pending intent.
         PendingIntent votePendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), 10, intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -148,28 +156,29 @@ public class ShortcutActivity extends ShortcutBaseActivity {
         downIntent.setAction(VOTE_RECEIVER);
         downIntent.putExtra(SHORTCUT_ID, 0);
         downIntent.putExtra(VOTE_TYPE, DOWN_VOTE);
+        downIntent.putExtra(SHORTCUT, shortcut);
 
         // now, wrap our intent in a pending intent.
         PendingIntent voteDownPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), 20, downIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, SHORTCUT_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setContentTitle("Notification Title")
-                .setContentText("Notification Text")
+                .setContentTitle("New Shortcut")
+                .setContentText(shortcut.getDescription())
                 .addAction(R.drawable.ic_up_vote, "Vote Up", votePendingIntent)
                 .addAction(R.drawable.ic_down_vote, "Vote Down", voteDownPendingIntent);
 
-        // TODO do we have an image?
-        ImageDecoder.Source source = ImageDecoder.createSource(getResources(), R.drawable.ic_add);
-        try {
-            Bitmap bitmap = ImageDecoder.decodeBitmap(source);
-            // if we are here, there was not an exception thrown, so we have a bitmap.
-            mBuilder.setStyle(new NotificationCompat.BigPictureStyle().bigPicture(bitmap));
-        } catch (IOException e) {
-            // if we can't get the bitmap, no problem!  Just use a normal notification.
-            e.printStackTrace();
+        if (shortcut.getImageUri() != null && !shortcut.getImageUri().isEmpty()) {
+            ImageDecoder.Source source = ImageDecoder.createSource(getContentResolver(), Uri.parse(shortcut.getImageUri()));
+            try {
+                Bitmap bitmap = ImageDecoder.decodeBitmap(source);
+                // if we are here, there was not an exception thrown, so we have a bitmap.
+                mBuilder.setStyle(new NotificationCompat.BigPictureStyle().bigPicture(bitmap));
+            } catch (IOException e) {
+                // if we can't get the bitmap, no problem!  Just use a normal notification.
+                e.printStackTrace();
+            }
         }
-
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         notificationManager.notify(1, mBuilder.build());
 
@@ -281,8 +290,10 @@ public class ShortcutActivity extends ShortcutBaseActivity {
         shortcut.setKeys(allKeys);
 
         FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
-        DatabaseReference reference = firebaseDatabase.getReference();
-        reference.child("root").push().setValue(shortcut);
+        DatabaseReference childReference = firebaseDatabase.getReference().child("root").push();
+        childReference.setValue(shortcut);
+        shortcut.setKey(childReference.getKey());
+
 
         allKeys = new ArrayList<String>();
         lblAllKeys.setText("");
