@@ -110,15 +110,15 @@ public class ShortcutActivity extends ShortcutBaseActivity {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 Iterable<DataSnapshot> children = dataSnapshot.getChildren();
 
-                List<Shortcut> allShorcuts = new ArrayList<Shortcut>();
+                List<Shortcut> allShortcuts = new ArrayList<Shortcut>();
                 for(DataSnapshot child : children) {
                     Shortcut shortcut = child.getValue(Shortcut.class);
                     shortcut.setKey(child.getKey());
-                    allShorcuts.add(shortcut);
+                    allShortcuts.add(shortcut);
 
                 }
-                int randomShorcut = (int) (allShorcuts.size() * Math.random());
-                Shortcut shortcut = allShorcuts.get(randomShorcut);
+                int randomShortcut = (int) (allShortcuts.size() * Math.random());
+                Shortcut shortcut = allShortcuts.get(randomShortcut);
                 createAndShowNotification(shortcut);
             }
 
