@@ -32,9 +32,12 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -48,6 +51,7 @@ import com.google.firebase.storage.UploadTask;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import butterknife.BindView;
@@ -66,6 +70,9 @@ public class ShortcutActivity extends ShortcutBaseActivity {
     public static final int UP_VOTE = 0;
     public static final int DOWN_VOTE = 1;
     public static final String SHORTCUT = "SHORTCUT";
+    public static final int AUTH_REQUEST_CODE = 1997;
+    private FirebaseUser user = null;
+
     @BindView(R.id.edtShortcutName)
     EditText edtShortcutName;
 
@@ -256,6 +263,13 @@ public class ShortcutActivity extends ShortcutBaseActivity {
                     e.printStackTrace();
                 }
 
+            } else if (requestCode == AUTH_REQUEST_CODE) {
+                user = FirebaseAuth.getInstance().getCurrentUser();
+                saveShortcutToFirebase();
+            }
+        } else if (resultCode == RESULT_CANCELED) {
+            if (requestCode == AUTH_REQUEST_CODE) {
+                Toast.makeText(this, "Not Authenticated, cannot save", Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -265,6 +279,19 @@ public class ShortcutActivity extends ShortcutBaseActivity {
      */
     @OnClick(R.id.btnSave)
     public void saveShortcut() {
+        // is the user logged in?
+        if (user != null) {
+            saveShortcutToFirebase();
+        } else {
+            // we need to authenticate.
+            List<AuthUI.IdpConfig> providers = Arrays.asList(new AuthUI.IdpConfig.EmailBuilder().build());
+            // start the activity that will prompt the user to login.
+            startActivityForResult(AuthUI.getInstance().createSignInIntentBuilder()
+                    .setAvailableProviders(providers).build(), AUTH_REQUEST_CODE);
+        }
+    }
+
+    private void saveShortcutToFirebase() {
         final FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
         final DatabaseReference reference = firebaseDatabase.getReference();
         final Shortcut shortcut = new Shortcut();
