@@ -284,7 +284,8 @@ public class ShortcutActivity extends ShortcutBaseActivity {
             saveShortcutToFirebase();
         } else {
             // we need to authenticate.
-            List<AuthUI.IdpConfig> providers = Arrays.asList(new AuthUI.IdpConfig.EmailBuilder().build());
+            List<AuthUI.IdpConfig> providers = Arrays.asList(new AuthUI.IdpConfig.EmailBuilder().build(),
+                    new AuthUI.IdpConfig.GoogleBuilder().build());
             // start the activity that will prompt the user to login.
             startActivityForResult(AuthUI.getInstance().createSignInIntentBuilder()
                     .setAvailableProviders(providers).build(), AUTH_REQUEST_CODE);
